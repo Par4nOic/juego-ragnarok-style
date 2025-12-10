@@ -30,25 +30,32 @@ h1 {
     background-color: #111;
     display: block;
     margin: 10px auto;
-    image-rendering: pixelated; /* Mantiene el aspecto de pixel art nítido */
+    image-rendering: pixelated;
 }
 
 .info-panel {
-    font-size: 1.1em;
+    font-size: 1em;
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.hp-bar {
+.stats-bars {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    gap: 5px;
 }
 
-.hp-bar-container {
-    width: 150px;
-    height: 20px;
+.hp-bar, .xp-bar {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+}
+
+.hp-bar-container, .xp-bar-container {
+    width: 120px;
+    height: 16px;
     background-color: #444;
     border: 1px solid #777;
     margin-left: 10px;
@@ -67,24 +74,38 @@ h1 {
     background-color: #e74c3c;
 }
 
-#game-over {
+#xp-bar-fill {
+    height: 100%;
+    width: 0%;
+    background-color: #3498db; /* Azul para la experiencia */
+    transition: width 0.5s ease;
+}
+
+#game-over, #level-up-modal {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(0, 0, 0, 0.9);
-    padding: 40px;
+    background-color: rgba(0, 0, 0, 0.95);
+    padding: 30px;
     border-radius: 10px;
-    border: 2px solid #e74c3c;
+    border: 2px solid #f39c12;
     text-align: center;
+    color: #f0f0f0;
 }
 
-#game-over h2 {
-    color: #e74c3c;
+#level-up-modal {
+    border-color: #2ecc71; /* Verde para el nivel arriba */
+}
+
+#game-over h2, #level-up-modal h2 {
     margin-top: 0;
 }
 
-#game-over button {
+#game-over h2 { color: #e74c3c; }
+#level-up-modal h2 { color: #2ecc71; }
+
+#game-over button, #confirm-level-up {
     margin-top: 20px;
     padding: 10px 20px;
     font-size: 1em;
@@ -93,6 +114,34 @@ h1 {
     color: white;
     border: none;
     border-radius: 5px;
+}
+
+#confirm-level-up {
+    background-color: #2ecc71;
+}
+
+.attributes {
+    margin: 20px 0;
+    text-align: left;
+    display: inline-block;
+}
+
+.attribute {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.attribute button {
+    background-color: #f39c12;
+    border: none;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
 }
 
 .controls {

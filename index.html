@@ -3,30 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Creator & Homunculus - Ragnarok Style</title>
+    <title>Creator & Homunculus - RPG</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="game-container">
         <h1>Creator & Homunculus</h1>
+        
+        <!-- Panel de Información con HP y XP -->
         <div class="info-panel">
-            <div class="hp-bar">
-                <span>HP:</span>
-                <div class="hp-bar-container">
-                    <div id="hp-bar-fill"></div>
+            <div class="stats-bars">
+                <div class="hp-bar">
+                    <span>HP: <span id="hp-text">100/100</span></span>
+                    <div class="hp-bar-container">
+                        <div id="hp-bar-fill"></div>
+                    </div>
+                </div>
+                <div class="xp-bar">
+                    <span>Lv. <span id="level-text">1</span> | XP: <span id="xp-text">0/10</span></span>
+                    <div class="xp-bar-container">
+                        <div id="xp-bar-fill"></div>
+                    </div>
                 </div>
             </div>
             <span>Puntuación: <span id="score">0</span></span>
         </div>
+
         <canvas id="game-canvas" width="800" height="600"></canvas>
+        
         <div class="controls">
             <p><strong>Controles:</strong></p>
-            <p>Usa las flechas del teclado para moverte.</p>
+            <p>Mueve con WASD. Apunta y dispara con el ratón.</p>
         </div>
+
+        <!-- Pantalla de Game Over -->
         <div id="game-over" class="hidden">
             <h2>Game Over</h2>
             <p>¡Has sido derrotado!</p>
             <button onclick="location.reload()">Reiniciar</button>
+        </div>
+
+        <!-- Menú de Subida de Nivel -->
+        <div id="level-up-modal" class="hidden">
+            <h2>¡HAS SUBIDO DE NIVEL!</h2>
+            <p>Tienes <span id="points-to-spend">5</span> puntos para gastar.</p>
+            <div class="attributes">
+                <div class="attribute">
+                    <span>Ataque: <span id="attack-value">10</span></span>
+                    <button onclick="game.player.addAttribute('attack')">+</button>
+                </div>
+                <div class="attribute">
+                    <span>Salud Máxima: <span id="health-value">100</span></span>
+                    <button onclick="game.player.addAttribute('health')">+</button>
+                </div>
+                <div class="attribute">
+                    <span>Velocidad: <span id="speed-value">5</span></span>
+                    <button onclick="game.player.addAttribute('speed')">+</button>
+                </div>
+                <div class="attribute">
+                    <span>Magia (Cadencia): <span id="magic-value">500</span>ms</span>
+                    <button onclick="game.player.addAttribute('magic')">+</button>
+                </div>
+            </div>
+            <button id="confirm-level-up" onclick="game.confirmLevelUp()">Confirmar</button>
         </div>
     </div>
 

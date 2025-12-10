@@ -1,12 +1,18 @@
 // --- CONFIGURACIÓN ---
 const canvas = document.getElementById('game-canvas');
 const ctx = canvas.getContext('2d');
+
+// --- ELEMENTOS DE UI ---
 const scoreElement = document.getElementById('score');
 const gameOverScreen = document.getElementById('game-over');
+const levelUpModal = document.getElementById('level-up-modal');
 const hpBarFill = document.getElementById('hp-bar-fill');
+const xpBarFill = document.getElementById('xp-bar-fill');
+const hpText = document.getElementById('hp-text');
+const xpText = document.getElementById('xp-text');
+const levelText = document.getElementById('level-text');
 
-// --- CARGA DE GRÁFICOS DESDE LA CARPETA 'assets' ---
-// El código de carga de imágenes no cambia.
+// --- CARGA DE GRÁFICOS ---
 const playerImg = new Image();
 const homunculusImg = new Image();
 const enemyImg = new Image();
@@ -23,46 +29,48 @@ const totalAssets = 4;
 function assetLoaded() {
     assetsLoaded++;
     if (assetsLoaded === totalAssets) {
-        init(); // Inicia el juego solo cuando todas las imágenes estén cargadas
+        // El juego se inicializará después de cargar los datos guardados
+        loadGameData();
     }
 }
-
 playerImg.onload = assetLoaded;
 homunculusImg.onload = assetLoaded;
 enemyImg.onload = assetLoaded;
 backgroundImg.onload = assetLoaded;
 
-// --- VARIABLES DEL JUEGO ---
+// --- VARIABLES GLOBALES ---
 let player;
 let homunculus;
 let enemies = [];
 let projectiles = [];
 let score = 0;
 let gameOver = false;
+let isPaused = false; // Para pausar el juego en el menú de subida de nivel
 let lastTime = 0;
 let enemySpawnTimer = 0;
 let enemySpawnInterval = 2000;
-
-// --- CONTROL DE ENTRADA (TECLADO Y RATÓN) ---
-// Creamos un objeto para guardar el estado de las teclas.
-const keys = {};
-// Guardamos la posición del ratón para apuntar.
-let mouseX = 0;
-let mouseY = 0;
 
 // --- CLASES ---
 class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
+        this.baseSpeed = 5;
         this.speed = 5;
         this.hp = 100;
         this.maxHp = 100;
         this.size = 64;
+        
+        // --- ATRIBUTOS RPG ---
+        this.level = 1;
+        this.xp = 0;
+        this.xpToNextLevel = 10;
+        this.unspentPoints = 0;
+        this.attack = 10; // Daño base del proyectil
+        this.magic = 500; // Cadencia de disparo en ms
     }
 
     update(keys) {
-        // CAMBIO: Movimiento con teclas WASD
         if (keys['w'] && this.y > 0) this.y -= this.speed;
         if (keys['s'] && this.y < canvas.height - this.size) this.y += this.speed;
         if (keys['a'] && this.x > 0) this.x -= this.speed;
@@ -79,7 +87,55 @@ class Player {
             this.hp = 0;
             handleGameOver();
         }
-        updateHpBar();
+        updateUI();
+    }
+
+    gainXp(amount) {
+        this.xp += amount;
+        while (this.xp >= this.xpToNextLevel) {
+            this.levelUp();
+        }
+        updateUI();
+    }
+
+    levelUp() {
+        this.level++;
+        this.unspentPoints += 5;
+        this.xp = this.xp - this.xpToNextLevel;
+        this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5); // Cada nivel requiere más XP
+        this.hp = this.maxHp; // Curar al subir de nivel
+        isPaused = true; // Pausar el juego
+        showLevelUpModal();
+        saveGameData();
+    }
+
+    addAttribute(attribute) {
+        if (this.unspentPoints <= 0) return;
+
+        switch (attribute) {
+            case 'attack':
+                this.attack += 2;
+                document.getElementById('attack-value').innerText = this.attack;
+                break;
+            case 'health':
+                this.maxHp += 20;
+                this.hp += 20; // Sumar 20 de HP al aumentar la salud máxima
+                document.getElementById('health-value').innerText = this.maxHp;
+                break;
+            case 'speed':
+                this.baseSpeed += 0.5;
+                this.speed = this.baseSpeed;
+                document.getElementById('speed-value').innerText = this.baseSpeed.toFixed(1);
+                break;
+            case 'magic':
+                this.magic -= 50; // Reducir cooldown
+                document.getElementById('magic-value').innerText = this.magic;
+                break;
+        }
+        this.unspentPoints--;
+        document.getElementById('points-to-spend').innerText = this.unspentPoints;
+        updateUI();
+        saveGameData();
     }
 }
 
@@ -88,17 +144,16 @@ class Homunculus {
         this.player = player;
         this.x = player.x;
         this.y = player.y;
-        this.speed = 6; // Un poco más rápido para seguir bien al jugador
+        this.speed = 6;
         this.size = 32;
     }
 
     update() {
-        // CAMBIO: El homúnculo ya no ataca, solo sigue al jugador.
         const dx = this.player.x + this.player.size/2 - this.x - this.size/2;
         const dy = this.player.y + this.player.size/2 - this.y - this.size/2;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > 50) { // Mantener una distancia
+        if (distance > 50) {
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
         }
@@ -116,6 +171,7 @@ class Enemy {
         this.speed = 1.5;
         this.size = 48;
         this.hp = 3;
+        this.xpValue = 2; // Cada enemigo da 2 de XP
     }
 
     update(player) {
@@ -130,10 +186,11 @@ class Enemy {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
     }
 
-    takeDamage() {
-        this.hp--;
+    takeDamage(damageAmount) {
+        this.hp -= damageAmount;
         if (this.hp <= 0) {
             score += 10;
+            player.gainXp(this.xpValue);
             scoreElement.textContent = score;
             return true;
         }
@@ -142,26 +199,24 @@ class Enemy {
 }
 
 class Projectile {
-    // CAMBIO: El constructor ahora recibe la posición de inicio y la del objetivo (ratón).
-    constructor(startX, startY, targetX, targetY) {
+    constructor(startX, startY, targetX, targetY, damage) {
         this.x = startX;
         this.y = startY;
         this.speed = 12;
-        // Calcula el ángulo hacia donde apunta el ratón
         const angle = Math.atan2(targetY - startY, targetX - startX);
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
         this.radius = 5;
+        this.damage = damage; // El daño ahora es variable
     }
 
     update() {
-        // CAMBIO: Movimiento basado en velocidad en los ejes X e Y.
         this.x += this.vx;
         this.y += this.vy;
     }
 
     draw() {
-        ctx.fillStyle = '#ADFF2F'; // Verde amarillento (Ácido)
+        ctx.fillStyle = '#ADFF2F';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -179,51 +234,27 @@ function init() {
     enemies = [];
     projectiles = [];
     score = 0;
-    scoreElement.textContent = score;
     gameOver = false;
+    isPaused = false;
+    scoreElement.textContent = score;
     gameOverScreen.classList.add('hidden');
-    
-    // CAMBIO: Configurar los listeners de eventos aquí, una sola vez.
+    levelUpModal.classList.add('hidden');
+    updateUI();
     setupEventListeners();
-
     gameLoop();
-}
-
-function setupEventListeners() {
-    // Listener para el teclado (WASD)
-    window.addEventListener('keydown', (e) => {
-        keys[e.key.toLowerCase()] = true;
-    });
-
-    window.addEventListener('keyup', (e) => {
-        keys[e.key.toLowerCase()] = false;
-    });
-
-    // Listener para el ratón (apuntar y disparar)
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        mouseX = e.clientX - rect.left;
-        mouseY = e.clientY - rect.top;
-    });
-
-    canvas.addEventListener('mousedown', (e) => {
-        // CAMBIO: Disparar solo con el clic izquierdo.
-        if (e.button === 0 && !gameOver) {
-            // El proyectil sale desde el centro del homúnculo.
-            const projectileX = homunculus.x + homunculus.size / 2;
-            const projectileY = homunculus.y + homunculus.size / 2;
-            projectiles.push(new Projectile(projectileX, projectileY, mouseX, mouseY));
-        }
-    });
 }
 
 function gameLoop(currentTime = 0) {
     if (gameOver) return;
+    requestAnimationFrame(gameLoop);
+
+    if (isPaused) return; // No actualizar ni dibujar si está pausado
+
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
+
     update(deltaTime);
     draw();
-    requestAnimationFrame(gameLoop);
 }
 
 function update(deltaTime) {
@@ -236,14 +267,13 @@ function update(deltaTime) {
         }
     }
 
-    // CAMBIO: El update ahora solo se preocupa del movimiento del jugador y el homúnculo.
     player.update(keys);
     homunculus.update();
 
     for (let i = enemies.length - 1; i >= 0; i--) {
         enemies[i].update(player);
         if (checkCollision(player, enemies[i])) {
-            player.takeDamage(1);
+            player.takeDamage(10);
             enemies.splice(i, 1);
         }
     }
@@ -256,7 +286,7 @@ function update(deltaTime) {
         }
         for (let j = enemies.length - 1; j >= 0; j--) {
             if (checkCollision(projectiles[i], enemies[j])) {
-                if (enemies[j].takeDamage()) {
+                if (enemies[j].takeDamage(projectiles[i].damage)) {
                     enemies.splice(j, 1);
                 }
                 projectiles.splice(i, 1);
@@ -267,7 +297,6 @@ function update(deltaTime) {
 }
 
 function draw() {
-    // 1. Dibuja el fondo de baldosas
     const tileSize = 64;
     for (let y = 0; y < canvas.height; y += tileSize) {
         for (let x = 0; x < canvas.width; x += tileSize) {
@@ -275,13 +304,127 @@ function draw() {
         }
     }
 
-    // 2. Dibuja los personajes y proyectiles
     player.draw();
     homunculus.draw();
     enemies.forEach(enemy => enemy.draw());
     projectiles.forEach(projectile => projectile.draw());
 }
 
+// --- FUNCIONES DE CONTROL Y UI ---
+const keys = {};
+let mouseX = 0, mouseY = 0;
+let canShoot = true;
+
+function setupEventListeners() {
+    window.addEventListener('keydown', (e) => keys[e.key.toLowerCase()] = true);
+    window.addEventListener('keyup', (e) => keys[e.key.toLowerCase()] = false);
+
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        if (e.button === 0 && !gameOver && !isPaused && canShoot) {
+            const projectileX = homunculus.x + homunculus.size / 2;
+            const projectileY = homunculus.y + homunculus.size / 2;
+            projectiles.push(new Projectile(projectileX, projectileY, mouseX, mouseY, player.attack));
+            
+            canShoot = false;
+            setTimeout(() => { canShoot = true; }, player.magic);
+        }
+    });
+}
+
+function updateUI() {
+    // HP Bar
+    hpText.textContent = `${player.hp}/${player.maxHp}`;
+    const hpPercent = (player.hp / player.maxHp) * 100;
+    hpBarFill.style.width = hpPercent + '%';
+    if (hpPercent < 30) {
+        hpBarFill.classList.add('low-hp');
+    } else {
+        hpBarFill.classList.remove('low-hp');
+    }
+
+    // XP Bar
+    levelText.textContent = player.level;
+    xpText.textContent = `${player.xp}/${player.xpToNextLevel}`;
+    const xpPercent = (player.xp / player.xpToNextLevel) * 100;
+    xpBarFill.style.width = xpPercent + '%';
+}
+
+function showLevelUpModal() {
+    document.getElementById('points-to-spend').innerText = player.unspentPoints;
+    document.getElementById('attack-value').innerText = player.attack;
+    document.getElementById('health-value').innerText = player.maxHp;
+    document.getElementById('speed-value').innerText = player.baseSpeed.toFixed(1);
+    document.getElementById('magic-value').innerText = player.magic;
+    levelUpModal.classList.remove('hidden');
+}
+
+function confirmLevelUp() {
+    levelUpModal.classList.add('hidden');
+    isPaused = false; // Reanudar el juego
+}
+
+function handleGameOver() {
+    gameOver = true;
+    gameOverScreen.classList.remove('hidden');
+}
+
+// --- SISTEMA DE GUARDADO (localStorage) ---
+function saveGameData() {
+    const gameData = {
+        level: player.level,
+        xp: player.xp,
+        xpToNextLevel: player.xpToNextLevel,
+        unspentPoints: player.unspentPoints,
+        attack: player.attack,
+        maxHp: player.maxHp,
+        baseSpeed: player.baseSpeed,
+        magic: player.magic
+    };
+    localStorage.setItem('rpgCreatorGameSave', JSON.stringify(gameData));
+}
+
+function loadGameData() {
+    const savedData = localStorage.getItem('rpgCreatorGameSave');
+    if (savedData) {
+        const gameData = JSON.parse(savedData);
+        // Crear un jugador con los datos cargados
+        player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
+        player.level = gameData.level || 1;
+        player.xp = gameData.xp || 0;
+        player.xpToNextLevel = gameData.xpToNextLevel || 10;
+        player.unspentPoints = gameData.unspentPoints || 0;
+        player.attack = gameData.attack || 10;
+        player.maxHp = gameData.maxHp || 100;
+        player.hp = player.maxHp; // Empezar con la vida máxima
+        player.baseSpeed = gameData.baseSpeed || 5;
+        player.speed = player.baseSpeed;
+        player.magic = gameData.magic || 500;
+    } else {
+        player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
+    }
+    
+    // Inicializar el resto del juego
+    homunculus = new Homunculus(player);
+    enemies = [];
+    projectiles = [];
+    score = 0;
+    gameOver = false;
+    isPaused = false;
+    scoreElement.textContent = score;
+    gameOverScreen.classList.add('hidden');
+    levelUpModal.classList.add('hidden');
+    updateUI();
+    setupEventListeners();
+    gameLoop();
+}
+
+// --- FUNCIONES AUXILIARES ---
 function spawnEnemy() {
     const side = Math.floor(Math.random() * 4);
     let x, y;
@@ -296,7 +439,7 @@ function spawnEnemy() {
 }
 
 function checkCollision(obj1, obj2) {
-    if (obj1.radius) { // Proyectil (círculo) vs Enemigo (cuadrado)
+    if (obj1.radius) {
         const enemyCenterX = obj2.x + obj2.size / 2;
         const enemyCenterY = obj2.y + obj2.size / 2;
         const distX = Math.abs(obj1.x - enemyCenterX);
@@ -304,7 +447,7 @@ function checkCollision(obj1, obj2) {
         if (distX > (obj2.size / 2 + obj1.radius)) return false;
         if (distY > (obj2.size / 2 + obj1.radius)) return false;
         return true;
-    } else { // Jugador (cuadrado) vs Enemigo (cuadrado)
+    } else {
         return obj1.x < obj2.x + obj2.size &&
                obj1.x + obj1.size > obj2.x &&
                obj1.y < obj2.y + obj2.size &&
@@ -312,15 +455,5 @@ function checkCollision(obj1, obj2) {
     }
 }
 
-function updateHpBar() {
-    const hpPercent = (player.hp / player.maxHp) * 100;
-    hpBarFill.style.width = hpPercent + '%';
-    if (hpPercent < 30) {
-        hpBarFill.classList.add('low-hp');
-    }
-}
-
-function handleGameOver() {
-    gameOver = true;
-    gameOverScreen.classList.remove('hidden');
-}
+// Exponer funciones necesarias globalmente para onclick en HTML
+window.game = { player, confirmLevelUp };
