@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creator & Homunculus - Ragnarok Style</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="game-container">
+        <h1>Creator & Homunculus</h1>
+        <div class="info-panel">
+            <div class="hp-bar">
+                <span>HP:</span>
+                <div class="hp-bar-container">
+                    <div id="hp-bar-fill"></div>
+                </div>
+            </div>
+            <span>Puntuación: <span id="score">0</span></span>
+        </div>
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div class="controls">
+            <p><strong>Controles:</strong></p>
+            <p>Usa las flechas del teclado para moverte.</p>
+        </div>
+        <div id="game-over" class="hidden">
+            <h2>Game Over</h2>
+            <p>¡Has sido derrotado!</p>
+            <button onclick="location.reload()">Reiniciar</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

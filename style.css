@@ -1,0 +1,110 @@
+body {
+    background-color: #1a1a1a;
+    color: #f0f0f0;
+    font-family: 'Verdana', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    background-image: url('https://www.transparenttextures.com/patterns/dark-denim.png');
+}
+
+.game-container {
+    text-align: center;
+    background-color: #2c2c2c;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.7);
+    border: 2px solid #444;
+}
+
+h1 {
+    margin-top: 0;
+    color: #f39c12;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#game-canvas {
+    border: 3px solid #555;
+    background-color: #111;
+    display: block;
+    margin: 10px auto;
+    image-rendering: pixelated; /* Mantiene el aspecto de pixel art nítido */
+}
+
+.info-panel {
+    font-size: 1.1em;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.hp-bar {
+    display: flex;
+    align-items: center;
+}
+
+.hp-bar-container {
+    width: 150px;
+    height: 20px;
+    background-color: #444;
+    border: 1px solid #777;
+    margin-left: 10px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+#hp-bar-fill {
+    height: 100%;
+    width: 100%;
+    background-color: #27ae60;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+#hp-bar-fill.low-hp {
+    background-color: #e74c3c;
+}
+
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(0, 0, 0, 0.9);
+    padding: 40px;
+    border-radius: 10px;
+    border: 2px solid #e74c3c;
+    text-align: center;
+}
+
+#game-over h2 {
+    color: #e74c3c;
+    margin-top: 0;
+}
+
+#game-over button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+.controls {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #999;
+}
+
+.controls p {
+    margin: 5px 0;
+}
+
+.hidden {
+    display: none;
+}
