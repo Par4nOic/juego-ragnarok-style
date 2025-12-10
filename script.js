@@ -5,6 +5,34 @@ const scoreElement = document.getElementById('score');
 const gameOverScreen = document.getElementById('game-over');
 const hpBarFill = document.getElementById('hp-bar-fill');
 
+// --- CARGA DE GRÁFICOS DESDE LA CARPETA 'assets' ---
+// Este código ahora carga tus imágenes personalizadas.
+
+const playerImg = new Image();
+const homunculusImg = new Image();
+const enemyImg = new Image();
+const backgroundImg = new Image();
+
+playerImg.src = 'assets/player.png';
+homunculusImg.src = 'assets/homunculus.png';
+enemyImg.src = 'assets/enemy.png';
+backgroundImg.src = 'assets/background.png';
+
+let assetsLoaded = 0;
+const totalAssets = 4; // Ahora son 4 assets
+
+function assetLoaded() {
+    assetsLoaded++;
+    if (assetsLoaded === totalAssets) {
+        init(); // Inicia el juego solo cuando todas las imágenes estén cargadas
+    }
+}
+
+playerImg.onload = assetLoaded;
+homunculusImg.onload = assetLoaded;
+enemyImg.onload = assetLoaded;
+backgroundImg.onload = assetLoaded;
+
 // --- VARIABLES DEL JUEGO ---
 let player;
 let homunculus;
@@ -24,7 +52,7 @@ class Player {
         this.speed = 5;
         this.hp = 100;
         this.maxHp = 100;
-        this.size = 64; // Tamaño del "sprite"
+        this.size = 64; // Ajusta al tamaño de tu sprite
     }
 
     update(keys) {
@@ -35,35 +63,7 @@ class Player {
     }
 
     draw() {
-        const px = this.x;
-        const py = this.y;
-        // Dibuja un Creator estilo pixel art
-        // Sombra
-        ctx.fillStyle = 'rgba(0,0,0,0.3)';
-        ctx.fillRect(px + 8, py + 48, 48, 8);
-        // Piernas (marrón oscuro)
-        ctx.fillStyle = '#654321';
-        ctx.fillRect(px + 12, py + 36, 12, 16);
-        ctx.fillRect(px + 28, py + 36, 12, 16);
-        // Bata blanca
-        ctx.fillStyle = '#F0F0F0';
-        ctx.fillRect(px + 8, py + 20, 36, 20);
-        // Brazos
-        ctx.fillRect(px, py + 24, 8, 12);
-        ctx.fillRect(px + 44, py + 24, 8, 12);
-        // Cabeza
-        ctx.fillStyle = '#FDBCB4'; // Color piel
-        ctx.fillRect(px + 16, py + 8, 20, 16);
-        // Sombrero de Creator (púrpura con una gema)
-        ctx.fillStyle = '#4B0082'; // Índigo
-        ctx.fillRect(px + 12, py + 4, 28, 8);
-        ctx.fillRect(px + 20, py, 12, 4);
-        ctx.fillStyle = '#FFD700'; // Gema dorada
-        ctx.fillRect(px + 26, py + 6, 4, 4);
-        // Ojos
-        ctx.fillStyle = '#000';
-        ctx.fillRect(px + 20, py + 12, 3, 3);
-        ctx.fillRect(px + 29, py + 12, 3, 3);
+        ctx.drawImage(playerImg, this.x, this.y, this.size, this.size);
     }
 
     takeDamage(amount) {
@@ -82,7 +82,7 @@ class Homunculus {
         this.x = player.x;
         this.y = player.y;
         this.speed = 6;
-        this.size = 32;
+        this.size = 32; // Ajusta al tamaño de tu sprite
         this.shootCooldown = 0;
         this.shootInterval = 500;
     }
@@ -128,28 +128,7 @@ class Homunculus {
     }
 
     draw() {
-        const hx = this.x;
-        const hy = this.y;
-        // Dibuja un Homunculus tipo pájaro (Filir)
-        // Cuerpo (dorado)
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(hx + 4, hy + 8, 24, 16);
-        // Alas (naranja)
-        ctx.fillStyle = '#FFA500';
-        ctx.fillRect(hx, hy + 10, 6, 10);
-        ctx.fillRect(hx + 26, hy + 10, 6, 10);
-        // Cabeza
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(hx + 8, hy + 2, 16, 8);
-        // Pico
-        ctx.fillStyle = '#FF6347';
-        ctx.fillRect(hx + 12, hy, 8, 4);
-        // Ojo
-        ctx.fillStyle = '#000';
-        ctx.fillRect(hx + 18, hy + 4, 3, 3);
-        // Cola
-        ctx.fillStyle = '#FFA500';
-        ctx.fillRect(hx + 2, hy + 20, 4, 8);
+        ctx.drawImage(homunculusImg, this.x, this.y, this.size, this.size);
     }
 }
 
@@ -158,7 +137,7 @@ class Enemy {
         this.x = x;
         this.y = y;
         this.speed = 1.5;
-        this.size = 48;
+        this.size = 48; // Ajusta al tamaño de tu sprite
         this.hp = 3;
     }
 
@@ -171,29 +150,7 @@ class Enemy {
     }
 
     draw() {
-        const ex = this.x;
-        const ey = this.y;
-        // Dibuja un Poring estilo pixel art
-        // Sombra
-        ctx.fillStyle = 'rgba(0,0,0,0.2)';
-        ctx.beginPath();
-        ctx.ellipse(ex + this.size/2, ey + this.size - 4, this.size/2 - 4, 6, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Cuerpo principal (bola gelatinosa rosa)
-        ctx.fillStyle = '#FFC0CB';
-        ctx.beginPath();
-        ctx.ellipse(ex + this.size/2, ey + this.size/2, this.size/2, this.size/2.5, 0, 0, Math.PI * 2);
-        ctx.fill();
-        // Ojos
-        ctx.fillStyle = '#000';
-        ctx.fillRect(ex + 12, ey + 16, 6, 6);
-        ctx.fillRect(ex + 30, ey + 16, 6, 6);
-        // Brillo en los ojos
-        ctx.fillStyle = '#FFF';
-        ctx.fillRect(ex + 14, ey + 18, 2, 2);
-        ctx.fillRect(ex + 32, ey + 18, 2, 2);
-        // Boca
-        ctx.fillRect(ex + 18, ey + 28, 12, 3);
+        ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
     }
 
     takeDamage() {
@@ -299,7 +256,15 @@ function update(deltaTime) {
 }
 
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // 1. Dibuja el fondo de baldosas
+    const tileSize = 64; // Asegúrate de que coincida con el tamaño de tu imagen de fondo
+    for (let y = 0; y < canvas.height; y += tileSize) {
+        for (let x = 0; x < canvas.width; x += tileSize) {
+            ctx.drawImage(backgroundImg, x, y, tileSize, tileSize);
+        }
+    }
+
+    // 2. Dibuja los personajes y proyectiles
     player.draw();
     homunculus.draw();
     enemies.forEach(enemy => enemy.draw());
@@ -326,7 +291,7 @@ function checkCollision(obj1, obj2) {
         const distX = Math.abs(obj1.x - enemyCenterX);
         const distY = Math.abs(obj1.y - enemyCenterY);
         if (distX > (obj2.size / 2 + obj1.radius)) return false;
-        if (distY > (obj2.size / 2.5 + obj1.radius)) return false;
+        if (distY > (obj2.size / 2 + obj1.radius)) return false;
         return true;
     } else {
         return obj1.x < obj2.x + obj2.size &&
@@ -348,6 +313,3 @@ function handleGameOver() {
     gameOver = true;
     gameOverScreen.classList.remove('hidden');
 }
-
-// --- INICIAR EL JUEGO ---
-init();
