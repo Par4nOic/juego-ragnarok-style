@@ -42,6 +42,7 @@ let player;
 let homunculus;
 let enemies = [];
 let projectiles = [];
+let damageNumbers = []; // NUEVO: Array para los números de daño
 let score = 0;
 let gameOver = false;
 let isPaused = false;
@@ -81,6 +82,9 @@ class Player {
 
     takeDamage(amount) {
         this.hp -= amount;
+        // NUEVO: Crear un número de daño para el jugador
+        damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, amount, '#e74c3c'));
+
         if (this.hp <= 0) {
             this.hp = 0;
             handleGameOver();
@@ -168,7 +172,9 @@ class Enemy {
         this.y = y;
         this.speed = 1.5;
         this.size = 48;
-        this.hp = 3;
+        // NUEVO: Propiedades de vida para el enemigo
+        this.maxHp = 10 + Math.floor(player.level * 1.5); // La vida aumenta con el nivel del jugador
+        this.hp = this.maxHp;
         this.xpValue = 2;
     }
 
@@ -182,10 +188,48 @@ class Enemy {
 
     draw() {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
+        
+        // NUEVO: Dibujar la barra de vida y el texto
+        this.drawHealthBar();
+    }
+
+    // NUEVO: Función para dibujar la barra de vida del enemigo
+    drawHealthBar() {
+        const barWidth = this.size;
+        const barHeight = 6;
+        const barY = this.y - 12;
+
+        // Fondo de la barra de vida (rojo oscuro)
+        ctx.fillStyle = 'rgba(139, 0, 0, 0.7)';
+        ctx.fillRect(this.x, barY, barWidth, barHeight);
+
+        // Relleno de la barra de vida (rojo)
+        const healthPercent = this.hp / this.maxHp;
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+        ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
+
+        // Borde de la barra
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.strokeRect(this.x, barY, barWidth, barHeight);
+        
+        // Texto de la vida
+        ctx.fillStyle = '#FFFFFF'; // Color blanco
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black'; // Contorno negro para legibilidad
+        ctx.lineWidth = 2;
+        const text = `${this.hp}/${this.maxHp}`;
+        const textX = this.x + this.size / 2;
+        const textY = barY - 3;
+        ctx.strokeText(text, textX, textY);
+        ctx.fillText(text, textX, textY);
     }
 
     takeDamage(damageAmount) {
         this.hp -= damageAmount;
+        // NUEVO: Crear un número de daño para el enemigo
+        damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, damageAmount, '#f1c40f'));
+
         if (this.hp <= 0) {
             score += 10;
             player.gainXp(this.xpValue);
@@ -225,12 +269,50 @@ class Projectile {
     }
 }
 
+// NUEVO: Clase para los números de daño flotantes
+class DamageNumber {
+    constructor(x, y, value, color) {
+        this.x = x;
+        this.y = y;
+        this.value = value;
+        this.color = color;
+        this.alpha = 1; // Opacidad
+        this.vy = -1; // Velocidad vertical (hacia arriba)
+        this.life = 60; // Frames de vida
+    }
+
+    update() {
+        this.y += this.vy;
+        this.alpha -= 1 / this.life;
+        this.life--;
+    }
+
+    draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.font = 'bold 20px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black';
+        ctx.lineWidth = 3;
+        ctx.strokeText(this.value, this.x, this.y);
+        ctx.fillText(this.value, this.x, this.y);
+        ctx.restore();
+    }
+
+    isDead() {
+        return this.life <= 0;
+    }
+}
+
+
 // --- FUNCIONES PRINCIPALES ---
 function init() {
     player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
+    damageNumbers = []; // NUEVO: Inicializar el array
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -240,7 +322,7 @@ function init() {
     updateUI();
     
     setupEventListeners();
-    setupLevelUpModalListeners(); // <-- NUEVO: Configurar los botones del modal
+    setupLevelUpModalListeners();
     
     gameLoop();
 }
@@ -295,6 +377,14 @@ function update(deltaTime) {
             }
         }
     }
+
+    // NUEVO: Actualizar y limpiar números de daño
+    for (let i = damageNumbers.length - 1; i >= 0; i--) {
+        damageNumbers[i].update();
+        if (damageNumbers[i].isDead()) {
+            damageNumbers.splice(i, 1);
+        }
+    }
 }
 
 function draw() {
@@ -309,6 +399,9 @@ function draw() {
     homunculus.draw();
     enemies.forEach(enemy => enemy.draw());
     projectiles.forEach(projectile => projectile.draw());
+    
+    // NUEVO: Dibujar los números de daño
+    damageNumbers.forEach(num => num.draw());
 }
 
 // --- FUNCIONES DE CONTROL Y UI ---
@@ -336,15 +429,6 @@ function setupEventListeners() {
             setTimeout(() => { canShoot = true; }, player.magic);
         }
     });
-}
-
-// CAMBIO CLAVE: Nueva función para asignar eventos a los botones del modal
-function setupLevelUpModalListeners() {
-    document.getElementById('btn-attack').addEventListener('click', () => player.addAttribute('attack'));
-    document.getElementById('btn-health').addEventListener('click', () => player.addAttribute('health'));
-    document.getElementById('btn-speed').addEventListener('click', () => player.addAttribute('speed'));
-    document.getElementById('btn-magic').addEventListener('click', () => player.addAttribute('magic'));
-    document.getElementById('btn-confirm-level-up').addEventListener('click', confirmLevelUp);
 }
 
 function updateUI() {
@@ -419,6 +503,7 @@ function loadGameData() {
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
+    damageNumbers = []; // NUEVO: Inicializar el array al cargar
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -427,7 +512,7 @@ function loadGameData() {
     levelUpModal.classList.add('hidden');
     updateUI();
     setupEventListeners();
-    setupLevelUpModalListeners(); // <-- NUEVO: Asegurarse de configurar los listeners aquí también
+    setupLevelUpModalListeners();
     gameLoop();
 }
 
@@ -461,3 +546,7 @@ function checkCollision(obj1, obj2) {
                obj1.y + obj1.size > obj2.y;
     }
 }
+
+// --- EXPONER FUNCIONES GLOBALES PARA HTML ---
+window.addAttributeToPlayer = (attribute) => player.addAttribute(attribute);
+window.confirmPlayerLevelUp = () => confirmLevelUp();
