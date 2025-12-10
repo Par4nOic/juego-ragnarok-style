@@ -60,7 +60,6 @@ class Player {
         this.maxHp = 100;
         this.size = 64;
         
-        // --- ATRIBUTOS RPG ---
         this.level = 1;
         this.xp = 0;
         this.xpToNextLevel = 10;
@@ -109,7 +108,6 @@ class Player {
     }
 
     addAttribute(attribute) {
-        console.log("addAttribute called for:", attribute, "Points left:", this.unspentPoints); // Línea de depuración
         if (this.unspentPoints <= 0) return;
 
         switch (attribute) {
@@ -240,7 +238,10 @@ function init() {
     gameOverScreen.classList.add('hidden');
     levelUpModal.classList.add('hidden');
     updateUI();
+    
     setupEventListeners();
+    setupLevelUpModalListeners(); // <-- NUEVO: Configurar los botones del modal
+    
     gameLoop();
 }
 
@@ -337,6 +338,15 @@ function setupEventListeners() {
     });
 }
 
+// CAMBIO CLAVE: Nueva función para asignar eventos a los botones del modal
+function setupLevelUpModalListeners() {
+    document.getElementById('btn-attack').addEventListener('click', () => player.addAttribute('attack'));
+    document.getElementById('btn-health').addEventListener('click', () => player.addAttribute('health'));
+    document.getElementById('btn-speed').addEventListener('click', () => player.addAttribute('speed'));
+    document.getElementById('btn-magic').addEventListener('click', () => player.addAttribute('magic'));
+    document.getElementById('btn-confirm-level-up').addEventListener('click', confirmLevelUp);
+}
+
 function updateUI() {
     hpText.textContent = `${player.hp}/${player.maxHp}`;
     const hpPercent = (player.hp / player.maxHp) * 100;
@@ -372,7 +382,7 @@ function handleGameOver() {
     gameOverScreen.classList.remove('hidden');
 }
 
-// --- SISTEMA DE GUARDADO (localStorage) ---
+// --- SISTEMA DE GUARDADO ---
 function saveGameData() {
     const gameData = {
         level: player.level,
@@ -417,6 +427,7 @@ function loadGameData() {
     levelUpModal.classList.add('hidden');
     updateUI();
     setupEventListeners();
+    setupLevelUpModalListeners(); // <-- NUEVO: Asegurarse de configurar los listeners aquí también
     gameLoop();
 }
 
@@ -450,8 +461,3 @@ function checkCollision(obj1, obj2) {
                obj1.y + obj1.size > obj2.y;
     }
 }
-
-// --- EXPONER FUNCIONES GLOBALES PARA HTML ---
-// Este es el cambio clave. Exponemos funciones específicas en lugar de un objeto.
-window.addAttributeToPlayer = (attribute) => player.addAttribute(attribute);
-window.confirmPlayerLevelUp = () => confirmLevelUp();

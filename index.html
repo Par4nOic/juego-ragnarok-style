@@ -10,7 +10,6 @@
     <div class="game-container">
         <h1>Creator & Homunculus</h1>
         
-        <!-- Panel de Información con HP y XP -->
         <div class="info-panel">
             <div class="stats-bars">
                 <div class="hp-bar">
@@ -36,38 +35,35 @@
             <p>Mueve con WASD. Apunta y dispara con el ratón.</p>
         </div>
 
-        <!-- Pantalla de Game Over -->
         <div id="game-over" class="hidden">
             <h2>Game Over</h2>
             <p>¡Has sido derrotado!</p>
             <button onclick="location.reload()">Reiniciar</button>
         </div>
 
-        <!-- Menú de Subida de Nivel -->
         <div id="level-up-modal" class="hidden">
             <h2>¡HAS SUBIDO DE NIVEL!</h2>
             <p>Tienes <span id="points-to-spend">5</span> puntos para gastar.</p>
             <div class="attributes">
                 <div class="attribute">
                     <span>Ataque: <span id="attack-value">10</span></span>
-                    <!-- CAMBIO: Llamada a función global directa -->
-                    <button onclick="addAttributeToPlayer('attack')">+</button>
+                    <!-- CAMBIO: Se usa un ID en lugar de onclick -->
+                    <button id="btn-attack">+</button>
                 </div>
                 <div class="attribute">
                     <span>Salud Máxima: <span id="health-value">100</span></span>
-                    <button onclick="addAttributeToPlayer('health')">+</button>
+                    <button id="btn-health">+</button>
                 </div>
                 <div class="attribute">
                     <span>Velocidad: <span id="speed-value">5</span></span>
-                    <button onclick="addAttributeToPlayer('speed')">+</button>
+                    <button id="btn-speed">+</button>
                 </div>
                 <div class="attribute">
                     <span>Magia (Cadencia): <span id="magic-value">500</span>ms</span>
-                    <button onclick="addAttributeToPlayer('magic')">+</button>
+                    <button id="btn-magic">+</button>
                 </div>
             </div>
-            <!-- CAMBIO: Llamada a función global directa -->
-            <button id="confirm-level-up" onclick="confirmPlayerLevelUp()">Confirmar</button>
+            <button id="btn-confirm-level-up">Confirmar</button>
         </div>
     </div>
 
