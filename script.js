@@ -6,8 +6,7 @@ const gameOverScreen = document.getElementById('game-over');
 const hpBarFill = document.getElementById('hp-bar-fill');
 
 // --- CARGA DE GRÁFICOS DESDE LA CARPETA 'assets' ---
-// Este código ahora carga tus imágenes personalizadas.
-
+// El código de carga de imágenes no cambia.
 const playerImg = new Image();
 const homunculusImg = new Image();
 const enemyImg = new Image();
@@ -19,7 +18,7 @@ enemyImg.src = 'assets/enemy.png';
 backgroundImg.src = 'assets/background.png';
 
 let assetsLoaded = 0;
-const totalAssets = 4; // Ahora son 4 assets
+const totalAssets = 4;
 
 function assetLoaded() {
     assetsLoaded++;
@@ -42,7 +41,14 @@ let score = 0;
 let gameOver = false;
 let lastTime = 0;
 let enemySpawnTimer = 0;
-let enemySpawnInterval = 2000; // 2 segundos
+let enemySpawnInterval = 2000;
+
+// --- CONTROL DE ENTRADA (TECLADO Y RATÓN) ---
+// Creamos un objeto para guardar el estado de las teclas.
+const keys = {};
+// Guardamos la posición del ratón para apuntar.
+let mouseX = 0;
+let mouseY = 0;
 
 // --- CLASES ---
 class Player {
@@ -52,14 +58,15 @@ class Player {
         this.speed = 5;
         this.hp = 100;
         this.maxHp = 100;
-        this.size = 64; // Ajusta al tamaño de tu sprite
+        this.size = 64;
     }
 
     update(keys) {
-        if (keys['ArrowUp'] && this.y > 0) this.y -= this.speed;
-        if (keys['ArrowDown'] && this.y < canvas.height - this.size) this.y += this.speed;
-        if (keys['ArrowLeft'] && this.x > 0) this.x -= this.speed;
-        if (keys['ArrowRight'] && this.x < canvas.width - this.size) this.x += this.speed;
+        // CAMBIO: Movimiento con teclas WASD
+        if (keys['w'] && this.y > 0) this.y -= this.speed;
+        if (keys['s'] && this.y < canvas.height - this.size) this.y += this.speed;
+        if (keys['a'] && this.x > 0) this.x -= this.speed;
+        if (keys['d'] && this.x < canvas.width - this.size) this.x += this.speed;
     }
 
     draw() {
@@ -81,50 +88,20 @@ class Homunculus {
         this.player = player;
         this.x = player.x;
         this.y = player.y;
-        this.speed = 6;
-        this.size = 32; // Ajusta al tamaño de tu sprite
-        this.shootCooldown = 0;
-        this.shootInterval = 500;
+        this.speed = 6; // Un poco más rápido para seguir bien al jugador
+        this.size = 32;
     }
 
-    update(deltaTime, enemies) {
+    update() {
+        // CAMBIO: El homúnculo ya no ataca, solo sigue al jugador.
         const dx = this.player.x + this.player.size/2 - this.x - this.size/2;
         const dy = this.player.y + this.player.size/2 - this.y - this.size/2;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        if (distance > 60) {
+        if (distance > 50) { // Mantener una distancia
             this.x += (dx / distance) * this.speed;
             this.y += (dy / distance) * this.speed;
         }
-
-        this.shootCooldown -= deltaTime;
-        if (this.shootCooldown <= 0) {
-            const target = this.findClosestEnemy(enemies);
-            if (target) {
-                this.shoot(target);
-                this.shootCooldown = this.shootInterval;
-            }
-        }
-    }
-
-    findClosestEnemy(enemies) {
-        let closest = null;
-        let minDistance = Infinity;
-        enemies.forEach(enemy => {
-            const dx = enemy.x + enemy.size/2 - this.x - this.size/2;
-            const dy = enemy.y + enemy.size/2 - this.y - this.size/2;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance < minDistance) {
-                minDistance = distance;
-                closest = enemy;
-            }
-        });
-        return closest;
-    }
-
-    shoot(target) {
-        const angle = Math.atan2(target.y + target.size/2 - this.y - this.size/2, target.x + target.size/2 - this.x - this.size/2);
-        projectiles.push(new Projectile(this.x + this.size/2, this.y + this.size/2, angle));
     }
 
     draw() {
@@ -137,7 +114,7 @@ class Enemy {
         this.x = x;
         this.y = y;
         this.speed = 1.5;
-        this.size = 48; // Ajusta al tamaño de tu sprite
+        this.size = 48;
         this.hp = 3;
     }
 
@@ -165,17 +142,22 @@ class Enemy {
 }
 
 class Projectile {
-    constructor(x, y, angle) {
-        this.x = x;
-        this.y = y;
-        this.speed = 10;
-        this.angle = angle;
+    // CAMBIO: El constructor ahora recibe la posición de inicio y la del objetivo (ratón).
+    constructor(startX, startY, targetX, targetY) {
+        this.x = startX;
+        this.y = startY;
+        this.speed = 12;
+        // Calcula el ángulo hacia donde apunta el ratón
+        const angle = Math.atan2(targetY - startY, targetX - startX);
+        this.vx = Math.cos(angle) * this.speed;
+        this.vy = Math.sin(angle) * this.speed;
         this.radius = 5;
     }
 
     update() {
-        this.x += Math.cos(this.angle) * this.speed;
-        this.y += Math.sin(this.angle) * this.speed;
+        // CAMBIO: Movimiento basado en velocidad en los ejes X e Y.
+        this.x += this.vx;
+        this.y += this.vy;
     }
 
     draw() {
@@ -200,7 +182,39 @@ function init() {
     scoreElement.textContent = score;
     gameOver = false;
     gameOverScreen.classList.add('hidden');
+    
+    // CAMBIO: Configurar los listeners de eventos aquí, una sola vez.
+    setupEventListeners();
+
     gameLoop();
+}
+
+function setupEventListeners() {
+    // Listener para el teclado (WASD)
+    window.addEventListener('keydown', (e) => {
+        keys[e.key.toLowerCase()] = true;
+    });
+
+    window.addEventListener('keyup', (e) => {
+        keys[e.key.toLowerCase()] = false;
+    });
+
+    // Listener para el ratón (apuntar y disparar)
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
+
+    canvas.addEventListener('mousedown', (e) => {
+        // CAMBIO: Disparar solo con el clic izquierdo.
+        if (e.button === 0 && !gameOver) {
+            // El proyectil sale desde el centro del homúnculo.
+            const projectileX = homunculus.x + homunculus.size / 2;
+            const projectileY = homunculus.y + homunculus.size / 2;
+            projectiles.push(new Projectile(projectileX, projectileY, mouseX, mouseY));
+        }
+    });
 }
 
 function gameLoop(currentTime = 0) {
@@ -222,12 +236,9 @@ function update(deltaTime) {
         }
     }
 
-    const keys = {};
-    window.addEventListener('keydown', e => keys[e.key] = true);
-    window.addEventListener('keyup', e => keys[e.key] = false);
-
+    // CAMBIO: El update ahora solo se preocupa del movimiento del jugador y el homúnculo.
     player.update(keys);
-    homunculus.update(deltaTime, enemies);
+    homunculus.update();
 
     for (let i = enemies.length - 1; i >= 0; i--) {
         enemies[i].update(player);
@@ -257,7 +268,7 @@ function update(deltaTime) {
 
 function draw() {
     // 1. Dibuja el fondo de baldosas
-    const tileSize = 64; // Asegúrate de que coincida con el tamaño de tu imagen de fondo
+    const tileSize = 64;
     for (let y = 0; y < canvas.height; y += tileSize) {
         for (let x = 0; x < canvas.width; x += tileSize) {
             ctx.drawImage(backgroundImg, x, y, tileSize, tileSize);
@@ -285,7 +296,7 @@ function spawnEnemy() {
 }
 
 function checkCollision(obj1, obj2) {
-    if (obj1.radius) {
+    if (obj1.radius) { // Proyectil (círculo) vs Enemigo (cuadrado)
         const enemyCenterX = obj2.x + obj2.size / 2;
         const enemyCenterY = obj2.y + obj2.size / 2;
         const distX = Math.abs(obj1.x - enemyCenterX);
@@ -293,7 +304,7 @@ function checkCollision(obj1, obj2) {
         if (distX > (obj2.size / 2 + obj1.radius)) return false;
         if (distY > (obj2.size / 2 + obj1.radius)) return false;
         return true;
-    } else {
+    } else { // Jugador (cuadrado) vs Enemigo (cuadrado)
         return obj1.x < obj2.x + obj2.size &&
                obj1.x + obj1.size > obj2.x &&
                obj1.y < obj2.y + obj2.size &&
