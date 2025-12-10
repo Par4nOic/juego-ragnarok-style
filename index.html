@@ -50,22 +50,24 @@
             <div class="attributes">
                 <div class="attribute">
                     <span>Ataque: <span id="attack-value">10</span></span>
-                    <button onclick="game.player.addAttribute('attack')">+</button>
+                    <!-- CAMBIO: Llamada a función global directa -->
+                    <button onclick="addAttributeToPlayer('attack')">+</button>
                 </div>
                 <div class="attribute">
                     <span>Salud Máxima: <span id="health-value">100</span></span>
-                    <button onclick="game.player.addAttribute('health')">+</button>
+                    <button onclick="addAttributeToPlayer('health')">+</button>
                 </div>
                 <div class="attribute">
                     <span>Velocidad: <span id="speed-value">5</span></span>
-                    <button onclick="game.player.addAttribute('speed')">+</button>
+                    <button onclick="addAttributeToPlayer('speed')">+</button>
                 </div>
                 <div class="attribute">
                     <span>Magia (Cadencia): <span id="magic-value">500</span>ms</span>
-                    <button onclick="game.player.addAttribute('magic')">+</button>
+                    <button onclick="addAttributeToPlayer('magic')">+</button>
                 </div>
             </div>
-            <button id="confirm-level-up" onclick="game.confirmLevelUp()">Confirmar</button>
+            <!-- CAMBIO: Llamada a función global directa -->
+            <button id="confirm-level-up" onclick="confirmPlayerLevelUp()">Confirmar</button>
         </div>
     </div>
 

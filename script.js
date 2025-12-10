@@ -29,7 +29,6 @@ const totalAssets = 4;
 function assetLoaded() {
     assetsLoaded++;
     if (assetsLoaded === totalAssets) {
-        // El juego se inicializará después de cargar los datos guardados
         loadGameData();
     }
 }
@@ -45,7 +44,7 @@ let enemies = [];
 let projectiles = [];
 let score = 0;
 let gameOver = false;
-let isPaused = false; // Para pausar el juego en el menú de subida de nivel
+let isPaused = false;
 let lastTime = 0;
 let enemySpawnTimer = 0;
 let enemySpawnInterval = 2000;
@@ -66,8 +65,8 @@ class Player {
         this.xp = 0;
         this.xpToNextLevel = 10;
         this.unspentPoints = 0;
-        this.attack = 10; // Daño base del proyectil
-        this.magic = 500; // Cadencia de disparo en ms
+        this.attack = 10;
+        this.magic = 500;
     }
 
     update(keys) {
@@ -102,14 +101,15 @@ class Player {
         this.level++;
         this.unspentPoints += 5;
         this.xp = this.xp - this.xpToNextLevel;
-        this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5); // Cada nivel requiere más XP
-        this.hp = this.maxHp; // Curar al subir de nivel
-        isPaused = true; // Pausar el juego
+        this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.5);
+        this.hp = this.maxHp;
+        isPaused = true;
         showLevelUpModal();
         saveGameData();
     }
 
     addAttribute(attribute) {
+        console.log("addAttribute called for:", attribute, "Points left:", this.unspentPoints); // Línea de depuración
         if (this.unspentPoints <= 0) return;
 
         switch (attribute) {
@@ -119,7 +119,7 @@ class Player {
                 break;
             case 'health':
                 this.maxHp += 20;
-                this.hp += 20; // Sumar 20 de HP al aumentar la salud máxima
+                this.hp += 20;
                 document.getElementById('health-value').innerText = this.maxHp;
                 break;
             case 'speed':
@@ -128,7 +128,7 @@ class Player {
                 document.getElementById('speed-value').innerText = this.baseSpeed.toFixed(1);
                 break;
             case 'magic':
-                this.magic -= 50; // Reducir cooldown
+                this.magic -= 50;
                 document.getElementById('magic-value').innerText = this.magic;
                 break;
         }
@@ -171,7 +171,7 @@ class Enemy {
         this.speed = 1.5;
         this.size = 48;
         this.hp = 3;
-        this.xpValue = 2; // Cada enemigo da 2 de XP
+        this.xpValue = 2;
     }
 
     update(player) {
@@ -207,7 +207,7 @@ class Projectile {
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
         this.radius = 5;
-        this.damage = damage; // El daño ahora es variable
+        this.damage = damage;
     }
 
     update() {
@@ -248,7 +248,7 @@ function gameLoop(currentTime = 0) {
     if (gameOver) return;
     requestAnimationFrame(gameLoop);
 
-    if (isPaused) return; // No actualizar ni dibujar si está pausado
+    if (isPaused) return;
 
     const deltaTime = currentTime - lastTime;
     lastTime = currentTime;
@@ -338,7 +338,6 @@ function setupEventListeners() {
 }
 
 function updateUI() {
-    // HP Bar
     hpText.textContent = `${player.hp}/${player.maxHp}`;
     const hpPercent = (player.hp / player.maxHp) * 100;
     hpBarFill.style.width = hpPercent + '%';
@@ -348,7 +347,6 @@ function updateUI() {
         hpBarFill.classList.remove('low-hp');
     }
 
-    // XP Bar
     levelText.textContent = player.level;
     xpText.textContent = `${player.xp}/${player.xpToNextLevel}`;
     const xpPercent = (player.xp / player.xpToNextLevel) * 100;
@@ -366,7 +364,7 @@ function showLevelUpModal() {
 
 function confirmLevelUp() {
     levelUpModal.classList.add('hidden');
-    isPaused = false; // Reanudar el juego
+    isPaused = false;
 }
 
 function handleGameOver() {
@@ -393,7 +391,6 @@ function loadGameData() {
     const savedData = localStorage.getItem('rpgCreatorGameSave');
     if (savedData) {
         const gameData = JSON.parse(savedData);
-        // Crear un jugador con los datos cargados
         player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
         player.level = gameData.level || 1;
         player.xp = gameData.xp || 0;
@@ -401,7 +398,7 @@ function loadGameData() {
         player.unspentPoints = gameData.unspentPoints || 0;
         player.attack = gameData.attack || 10;
         player.maxHp = gameData.maxHp || 100;
-        player.hp = player.maxHp; // Empezar con la vida máxima
+        player.hp = player.maxHp;
         player.baseSpeed = gameData.baseSpeed || 5;
         player.speed = player.baseSpeed;
         player.magic = gameData.magic || 500;
@@ -409,7 +406,6 @@ function loadGameData() {
         player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
     }
     
-    // Inicializar el resto del juego
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
@@ -455,5 +451,7 @@ function checkCollision(obj1, obj2) {
     }
 }
 
-// Exponer funciones necesarias globalmente para onclick en HTML
-window.game = { player, confirmLevelUp };
+// --- EXPONER FUNCIONES GLOBALES PARA HTML ---
+// Este es el cambio clave. Exponemos funciones específicas en lugar de un objeto.
+window.addAttributeToPlayer = (attribute) => player.addAttribute(attribute);
+window.confirmPlayerLevelUp = () => confirmLevelUp();
