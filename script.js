@@ -42,7 +42,7 @@ let player;
 let homunculus;
 let enemies = [];
 let projectiles = [];
-let damageNumbers = []; // NUEVO: Array para los números de daño
+let damageNumbers = [];
 let score = 0;
 let gameOver = false;
 let isPaused = false;
@@ -55,8 +55,8 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.baseSpeed = 5;
-        this.speed = 5;
+        this.baseSpeed =5;
+        this.speed =5;
         this.hp = 100;
         this.maxHp = 100;
         this.size = 64;
@@ -82,7 +82,6 @@ class Player {
 
     takeDamage(amount) {
         this.hp -= amount;
-        // NUEVO: Crear un número de daño para el jugador
         damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, amount, '#e74c3c'));
 
         if (this.hp <= 0) {
@@ -167,13 +166,14 @@ class Homunculus {
 }
 
 class Enemy {
-    constructor(x, y) {
+    // CORRECCIÓN: El constructor ahora acepta el nivel del jugador como argumento.
+    constructor(x, y, playerLevel) {
         this.x = x;
         this.y = y;
         this.speed = 1.5;
         this.size = 48;
-        // NUEVO: Propiedades de vida para el enemigo
-        this.maxHp = 10 + Math.floor(player.level * 1.5); // La vida aumenta con el nivel del jugador
+        // CORRECCIÓN: Usa el nivel pasado como argumento, no el objeto global 'player'.
+        this.maxHp = 10 + Math.floor(playerLevel * 1.5);
         this.hp = this.maxHp;
         this.xpValue = 2;
     }
@@ -188,35 +188,28 @@ class Enemy {
 
     draw() {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
-        
-        // NUEVO: Dibujar la barra de vida y el texto
         this.drawHealthBar();
     }
 
-    // NUEVO: Función para dibujar la barra de vida del enemigo
     drawHealthBar() {
         const barWidth = this.size;
         const barHeight = 6;
         const barY = this.y - 12;
 
-        // Fondo de la barra de vida (rojo oscuro)
         ctx.fillStyle = 'rgba(139, 0, 0, 0.7)';
         ctx.fillRect(this.x, barY, barWidth, barHeight);
 
-        // Relleno de la barra de vida (rojo)
         const healthPercent = this.hp / this.maxHp;
         ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
         ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
 
-        // Borde de la barra
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.strokeRect(this.x, barY, barWidth, barHeight);
         
-        // Texto de la vida
-        ctx.fillStyle = '#FFFFFF'; // Color blanco
+        ctx.fillStyle = '#FFFFFF';
         ctx.font = 'bold 10px Arial';
         ctx.textAlign = 'center';
-        ctx.strokeStyle = 'black'; // Contorno negro para legibilidad
+        ctx.strokeStyle = 'black';
         ctx.lineWidth = 2;
         const text = `${this.hp}/${this.maxHp}`;
         const textX = this.x + this.size / 2;
@@ -227,7 +220,6 @@ class Enemy {
 
     takeDamage(damageAmount) {
         this.hp -= damageAmount;
-        // NUEVO: Crear un número de daño para el enemigo
         damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, damageAmount, '#f1c40f'));
 
         if (this.hp <= 0) {
@@ -248,7 +240,7 @@ class Projectile {
         const angle = Math.atan2(targetY - startY, targetX - startX);
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
-        this.radius = 5;
+        this.radius =5;
         this.damage = damage;
     }
 
@@ -269,16 +261,15 @@ class Projectile {
     }
 }
 
-// NUEVO: Clase para los números de daño flotantes
 class DamageNumber {
     constructor(x, y, value, color) {
         this.x = x;
         this.y = y;
         this.value = value;
         this.color = color;
-        this.alpha = 1; // Opacidad
-        this.vy = -1; // Velocidad vertical (hacia arriba)
-        this.life = 60; // Frames de vida
+        this.alpha = 1;
+        this.vy = -1;
+        this.life = 60;
     }
 
     update() {
@@ -305,14 +296,13 @@ class DamageNumber {
     }
 }
 
-
 // --- FUNCIONES PRINCIPALES ---
 function init() {
     player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
-    damageNumbers = []; // NUEVO: Inicializar el array
+    damageNumbers = [];
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -378,7 +368,6 @@ function update(deltaTime) {
         }
     }
 
-    // NUEVO: Actualizar y limpiar números de daño
     for (let i = damageNumbers.length - 1; i >= 0; i--) {
         damageNumbers[i].update();
         if (damageNumbers[i].isDead()) {
@@ -399,8 +388,6 @@ function draw() {
     homunculus.draw();
     enemies.forEach(enemy => enemy.draw());
     projectiles.forEach(projectile => projectile.draw());
-    
-    // NUEVO: Dibujar los números de daño
     damageNumbers.forEach(num => num.draw());
 }
 
@@ -493,7 +480,7 @@ function loadGameData() {
         player.attack = gameData.attack || 10;
         player.maxHp = gameData.maxHp || 100;
         player.hp = player.maxHp;
-        player.baseSpeed = gameData.baseSpeed || 5;
+        player.baseSpeed = gameData.baseSpeed ||5;
         player.speed = player.baseSpeed;
         player.magic = gameData.magic || 500;
     } else {
@@ -503,7 +490,7 @@ function loadGameData() {
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
-    damageNumbers = []; // NUEVO: Inicializar el array al cargar
+    damageNumbers = [];
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -527,7 +514,8 @@ function spawnEnemy() {
         case 2: x = Math.random() * canvas.width; y = canvas.height; break;
         case 3: x = -size; y = Math.random() * canvas.height; break;
     }
-    enemies.push(new Enemy(x, y));
+    // CORRECCIÓN: Pasa el nivel del jugador actual al crear un nuevo enemigo.
+    enemies.push(new Enemy(x, y, player.level));
 }
 
 function checkCollision(obj1, obj2) {
