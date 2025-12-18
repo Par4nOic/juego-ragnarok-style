@@ -42,7 +42,6 @@ let player;
 let homunculus;
 let enemies = [];
 let projectiles = [];
-let damageNumbers = [];
 let score = 0;
 let gameOver = false;
 let isPaused = false;
@@ -55,8 +54,8 @@ class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.baseSpeed =5;
-        this.speed =5;
+        this.baseSpeed = 5;
+        this.speed = 5;
         this.hp = 100;
         this.maxHp = 100;
         this.size = 64;
@@ -82,8 +81,6 @@ class Player {
 
     takeDamage(amount) {
         this.hp -= amount;
-        damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, amount, '#e74c3c'));
-
         if (this.hp <= 0) {
             this.hp = 0;
             handleGameOver();
@@ -166,15 +163,12 @@ class Homunculus {
 }
 
 class Enemy {
-    // CORRECCIÓN: El constructor ahora acepta el nivel del jugador como argumento.
-    constructor(x, y, playerLevel) {
+    constructor(x, y) {
         this.x = x;
         this.y = y;
         this.speed = 1.5;
         this.size = 48;
-        // CORRECCIÓN: Usa el nivel pasado como argumento, no el objeto global 'player'.
-        this.maxHp = 10 + Math.floor(playerLevel * 1.5);
-        this.hp = this.maxHp;
+        this.hp = 3;
         this.xpValue = 2;
     }
 
@@ -188,40 +182,10 @@ class Enemy {
 
     draw() {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
-        this.drawHealthBar();
-    }
-
-    drawHealthBar() {
-        const barWidth = this.size;
-        const barHeight = 6;
-        const barY = this.y - 12;
-
-        ctx.fillStyle = 'rgba(139, 0, 0, 0.7)';
-        ctx.fillRect(this.x, barY, barWidth, barHeight);
-
-        const healthPercent = this.hp / this.maxHp;
-        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
-        ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
-
-        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
-        ctx.strokeRect(this.x, barY, barWidth, barHeight);
-        
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 2;
-        const text = `${this.hp}/${this.maxHp}`;
-        const textX = this.x + this.size / 2;
-        const textY = barY - 3;
-        ctx.strokeText(text, textX, textY);
-        ctx.fillText(text, textX, textY);
     }
 
     takeDamage(damageAmount) {
         this.hp -= damageAmount;
-        damageNumbers.push(new DamageNumber(this.x + this.size / 2, this.y, damageAmount, '#f1c40f'));
-
         if (this.hp <= 0) {
             score += 10;
             player.gainXp(this.xpValue);
@@ -240,7 +204,7 @@ class Projectile {
         const angle = Math.atan2(targetY - startY, targetX - startX);
         this.vx = Math.cos(angle) * this.speed;
         this.vy = Math.sin(angle) * this.speed;
-        this.radius =5;
+        this.radius = 5;
         this.damage = damage;
     }
 
@@ -261,48 +225,12 @@ class Projectile {
     }
 }
 
-class DamageNumber {
-    constructor(x, y, value, color) {
-        this.x = x;
-        this.y = y;
-        this.value = value;
-        this.color = color;
-        this.alpha = 1;
-        this.vy = -1;
-        this.life = 60;
-    }
-
-    update() {
-        this.y += this.vy;
-        this.alpha -= 1 / this.life;
-        this.life--;
-    }
-
-    draw() {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = this.color;
-        ctx.font = 'bold 20px Arial';
-        ctx.textAlign = 'center';
-        ctx.strokeStyle = 'black';
-        ctx.lineWidth = 3;
-        ctx.strokeText(this.value, this.x, this.y);
-        ctx.fillText(this.value, this.x, this.y);
-        ctx.restore();
-    }
-
-    isDead() {
-        return this.life <= 0;
-    }
-}
-
 // --- FUNCIONES PRINCIPALES ---
 function init() {
     player = new Player(canvas.width / 2 - 32, canvas.height / 2 - 32);
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
-    damageNumbers = [];
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -312,7 +240,7 @@ function init() {
     updateUI();
     
     setupEventListeners();
-    setupLevelUpModalListeners();
+    setupLevelUpModalListeners(); // Esta función ahora SÍ existe
     
     gameLoop();
 }
@@ -367,13 +295,6 @@ function update(deltaTime) {
             }
         }
     }
-
-    for (let i = damageNumbers.length - 1; i >= 0; i--) {
-        damageNumbers[i].update();
-        if (damageNumbers[i].isDead()) {
-            damageNumbers.splice(i, 1);
-        }
-    }
 }
 
 function draw() {
@@ -388,7 +309,6 @@ function draw() {
     homunculus.draw();
     enemies.forEach(enemy => enemy.draw());
     projectiles.forEach(projectile => projectile.draw());
-    damageNumbers.forEach(num => num.draw());
 }
 
 // --- FUNCIONES DE CONTROL Y UI ---
@@ -418,6 +338,15 @@ function setupEventListeners() {
     });
 }
 
+// CORRECCIÓN FINAL: Esta es la función que faltaba y causaba el error.
+function setupLevelUpModalListeners() {
+    document.getElementById('btn-attack').addEventListener('click', () => player.addAttribute('attack'));
+    document.getElementById('btn-health').addEventListener('click', () => player.addAttribute('health'));
+    document.getElementById('btn-speed').addEventListener('click', () => player.addAttribute('speed'));
+    document.getElementById('btn-magic').addEventListener('click', () => player.addAttribute('magic'));
+    document.getElementById('btn-confirm-level-up').addEventListener('click', confirmLevelUp);
+}
+
 function updateUI() {
     hpText.textContent = `${player.hp}/${player.maxHp}`;
     const hpPercent = (player.hp / player.maxHp) * 100;
@@ -439,7 +368,7 @@ function showLevelUpModal() {
     document.getElementById('attack-value').innerText = player.attack;
     document.getElementById('health-value').innerText = player.maxHp;
     document.getElementById('speed-value').innerText = player.baseSpeed.toFixed(1);
-    document.getElementById('magic-value').innerText = player.magic;
+    document.getElementById('magic-value').innerText = this.magic;
     levelUpModal.classList.remove('hidden');
 }
 
@@ -480,7 +409,7 @@ function loadGameData() {
         player.attack = gameData.attack || 10;
         player.maxHp = gameData.maxHp || 100;
         player.hp = player.maxHp;
-        player.baseSpeed = gameData.baseSpeed ||5;
+        player.baseSpeed = gameData.baseSpeed || 5;
         player.speed = player.baseSpeed;
         player.magic = gameData.magic || 500;
     } else {
@@ -490,7 +419,6 @@ function loadGameData() {
     homunculus = new Homunculus(player);
     enemies = [];
     projectiles = [];
-    damageNumbers = [];
     score = 0;
     gameOver = false;
     isPaused = false;
@@ -499,7 +427,7 @@ function loadGameData() {
     levelUpModal.classList.add('hidden');
     updateUI();
     setupEventListeners();
-    setupLevelUpModalListeners();
+    setupLevelUpModalListeners(); // Llamarla aquí también es crucial
     gameLoop();
 }
 
@@ -514,8 +442,7 @@ function spawnEnemy() {
         case 2: x = Math.random() * canvas.width; y = canvas.height; break;
         case 3: x = -size; y = Math.random() * canvas.height; break;
     }
-    // CORRECCIÓN: Pasa el nivel del jugador actual al crear un nuevo enemigo.
-    enemies.push(new Enemy(x, y, player.level));
+    enemies.push(new Enemy(x, y));
 }
 
 function checkCollision(obj1, obj2) {
