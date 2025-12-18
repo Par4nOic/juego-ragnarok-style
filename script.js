@@ -77,6 +77,28 @@ class Player {
 
     draw() {
         ctx.drawImage(playerImg, this.x, this.y, this.size, this.size);
+        // NUEVO: Dibujar la barra de vida del jugador
+        this.drawHealthBar();
+    }
+
+    // NUEVO: Función para dibujar la barra de vida del jugador
+    drawHealthBar() {
+        const barWidth = this.size;
+        const barHeight = 6;
+        const barY = this.y - 10;
+
+        // Fondo de la barra (verde oscuro)
+        ctx.fillStyle = 'rgba(0, 100, 0, 0.7)';
+        ctx.fillRect(this.x, barY, barWidth, barHeight);
+
+        // Relleno de la barra (verde)
+        const healthPercent = this.hp / this.maxHp;
+        ctx.fillStyle = 'rgba(0, 255, 0, 0.9)';
+        ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
+
+        // Borde de la barra
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.strokeRect(this.x, barY, barWidth, barHeight);
     }
 
     takeDamage(amount) {
@@ -168,7 +190,9 @@ class Enemy {
         this.y = y;
         this.speed = 1.5;
         this.size = 48;
-        this.hp = 3;
+        // MODIFICADO: Añadida vida máxima para el enemigo
+        this.maxHp = 3;
+        this.hp = this.maxHp;
         this.xpValue = 2;
     }
 
@@ -182,6 +206,28 @@ class Enemy {
 
     draw() {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
+        // NUEVO: Dibujar la barra de vida del enemigo
+        this.drawHealthBar();
+    }
+
+    // NUEVO: Función para dibujar la barra de vida del enemigo
+    drawHealthBar() {
+        const barWidth = this.size;
+        const barHeight = 6;
+        const barY = this.y - 10;
+
+        // Fondo de la barra (rojo oscuro)
+        ctx.fillStyle = 'rgba(139, 0, 0, 0.7)';
+        ctx.fillRect(this.x, barY, barWidth, barHeight);
+
+        // Relleno de la barra (rojo)
+        const healthPercent = this.hp / this.maxHp;
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+        ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
+
+        // Borde de la barra
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.strokeRect(this.x, barY, barWidth, barHeight);
     }
 
     takeDamage(damageAmount) {
@@ -240,7 +286,7 @@ function init() {
     updateUI();
     
     setupEventListeners();
-    setupLevelUpModalListeners(); // Esta función ahora SÍ existe
+    setupLevelUpModalListeners();
     
     gameLoop();
 }
@@ -338,7 +384,6 @@ function setupEventListeners() {
     });
 }
 
-// CORRECCIÓN FINAL: Esta es la función que faltaba y causaba el error.
 function setupLevelUpModalListeners() {
     document.getElementById('btn-attack').addEventListener('click', () => player.addAttribute('attack'));
     document.getElementById('btn-health').addEventListener('click', () => player.addAttribute('health'));
@@ -368,7 +413,7 @@ function showLevelUpModal() {
     document.getElementById('attack-value').innerText = player.attack;
     document.getElementById('health-value').innerText = player.maxHp;
     document.getElementById('speed-value').innerText = player.baseSpeed.toFixed(1);
-    document.getElementById('magic-value').innerText = this.magic;
+    document.getElementById('magic-value').innerText = player.magic;
     levelUpModal.classList.remove('hidden');
 }
 
@@ -427,7 +472,7 @@ function loadGameData() {
     levelUpModal.classList.add('hidden');
     updateUI();
     setupEventListeners();
-    setupLevelUpModalListeners(); // Llamarla aquí también es crucial
+    setupLevelUpModalListeners();
     gameLoop();
 }
 
