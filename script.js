@@ -77,28 +77,35 @@ class Player {
 
     draw() {
         ctx.drawImage(playerImg, this.x, this.y, this.size, this.size);
-        // NUEVO: Dibujar la barra de vida del jugador
         this.drawHealthBar();
     }
 
-    // NUEVO: Función para dibujar la barra de vida del jugador
     drawHealthBar() {
         const barWidth = this.size;
         const barHeight = 6;
         const barY = this.y - 10;
 
-        // Fondo de la barra (verde oscuro)
         ctx.fillStyle = 'rgba(0, 100, 0, 0.7)';
         ctx.fillRect(this.x, barY, barWidth, barHeight);
 
-        // Relleno de la barra (verde)
         const healthPercent = this.hp / this.maxHp;
         ctx.fillStyle = 'rgba(0, 255, 0, 0.9)';
         ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
 
-        // Borde de la barra
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.strokeRect(this.x, barY, barWidth, barHeight);
+        
+        // NUEVO: Dibujar el texto de la vida del jugador
+        ctx.fillStyle = '#FFFFFF'; // Color blanco
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black'; // Contorno negro para legibilidad
+        ctx.lineWidth = 2;
+        const text = `${this.hp}/${this.maxHp}`;
+        const textX = this.x + this.size / 2;
+        const textY = barY - 3;
+        ctx.strokeText(text, textX, textY);
+        ctx.fillText(text, textX, textY);
     }
 
     takeDamage(amount) {
@@ -190,7 +197,6 @@ class Enemy {
         this.y = y;
         this.speed = 1.5;
         this.size = 48;
-        // MODIFICADO: Añadida vida máxima para el enemigo
         this.maxHp = 3;
         this.hp = this.maxHp;
         this.xpValue = 2;
@@ -206,28 +212,35 @@ class Enemy {
 
     draw() {
         ctx.drawImage(enemyImg, this.x, this.y, this.size, this.size);
-        // NUEVO: Dibujar la barra de vida del enemigo
         this.drawHealthBar();
     }
 
-    // NUEVO: Función para dibujar la barra de vida del enemigo
     drawHealthBar() {
         const barWidth = this.size;
         const barHeight = 6;
         const barY = this.y - 10;
 
-        // Fondo de la barra (rojo oscuro)
         ctx.fillStyle = 'rgba(139, 0, 0, 0.7)';
         ctx.fillRect(this.x, barY, barWidth, barHeight);
 
-        // Relleno de la barra (rojo)
         const healthPercent = this.hp / this.maxHp;
         ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
         ctx.fillRect(this.x, barY, barWidth * healthPercent, barHeight);
 
-        // Borde de la barra
         ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
         ctx.strokeRect(this.x, barY, barWidth, barHeight);
+        
+        // NUEVO: Dibujar el texto de la vida del enemigo
+        ctx.fillStyle = '#FFFFFF'; // Color blanco
+        ctx.font = 'bold 10px Arial';
+        ctx.textAlign = 'center';
+        ctx.strokeStyle = 'black'; // Contorno negro para legibilidad
+        ctx.lineWidth = 2;
+        const text = `${this.hp}/${this.maxHp}`;
+        const textX = this.x + this.size / 2;
+        const textY = barY - 3;
+        ctx.strokeText(text, textX, textY);
+        ctx.fillText(text, textX, textY);
     }
 
     takeDamage(damageAmount) {
